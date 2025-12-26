@@ -1,0 +1,214 @@
+index.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jardín de Amor Infinito 🌸</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --rosa-pastel: #ffe5ec;
+            --rosa-fuerte: #fb6f92;
+            --texto: #4a4a4a;
+        }
+
+        body {
+            margin: 0; padding: 0; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background: radial-gradient(circle, #fff0f3 0%, #ffc2d1 100%);
+            font-family: 'Quicksand', sans-serif;
+            overflow: hidden; touch-action: manipulation;
+        }
+
+        /* Stats */
+        .stats {
+            position: absolute; top: 20px;
+            display: flex; gap: 15px; z-index: 20;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 8px 18px; border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(251, 111, 146, 0.15);
+        }
+        .stat-item { font-weight: 700; color: var(--rosa-fuerte); font-size: 0.85rem; }
+
+        /* Card */
+        .card {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 25px; border-radius: 40px;
+            text-align: center; width: 88%; max-width: 350px;
+            z-index: 10; border: 2px solid white;
+            box-shadow: 0 20px 40px rgba(251, 111, 146, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        #level-tag { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: #fb6f92; font-weight: 700; opacity: 0.7; }
+        h1 { font-family: 'Dancing Script', cursive; color: var(--rosa-fuerte); font-size: 2.2rem; margin: 10px 0; }
+
+        /* Barra de Progreso */
+        .progress-outer { width: 100%; height: 12px; background: #f0f0f0; border-radius: 10px; margin: 15px 0; overflow: hidden; border: 1px solid #ffe5ec; }
+        .progress-inner { width: 0%; height: 100%; background: linear-gradient(90deg, #fb6f92, #ff8fab); transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        .message-box { min-height: 120px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+        #mensaje { color: var(--texto); transition: all 0.3s ease; font-size: 1.1rem; line-height: 1.4; }
+
+        .btn-love {
+            background: linear-gradient(45deg, var(--rosa-fuerte), #ff8fab);
+            color: white; border: none; width: 100%;
+            padding: 18px; font-size: 1.1rem; border-radius: 25px;
+            cursor: pointer; font-weight: 700;
+            box-shadow: 0 8px 15px rgba(251, 111, 146, 0.3);
+        }
+        .btn-love:active { transform: scale(0.95); }
+
+        /* ANIMACIÓN GRAN CORAZÓN */
+        #heart-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            pointer-events: none; z-index: 100; opacity: 0;
+        }
+        .big-heart { font-size: 150px; filter: drop-shadow(0 0 20px rgba(251, 111, 146, 0.5)); }
+        
+        .pop-heart { animation: heartPop 1.2s ease-out forwards; }
+        @keyframes heartPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        /* Pétalos */
+        .flower { position: absolute; pointer-events: none; z-index: 1; animation: floatUp 8s linear forwards; }
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            20% { opacity: 0.7; }
+            100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stats">
+        <div class="stat-item">🌸 Flores: <span id="count">0</span></div>
+        <div class="stat-item">💖 Nivel: <span id="level-name">Cariño</span></div>
+    </div>
+
+    <div id="heart-overlay"><span class="big-heart">❤️</span></div>
+
+    <div class="card">
+        <div id="level-tag">Pensamientos para ti</div>
+        <h1 id="title">Click de Amor</h1>
+        
+        <div class="progress-outer">
+            <div class="progress-inner" id="bar"></div>
+        </div>
+
+        <div class="message-box">
+            <p id="mensaje">Cada vez que llenes la barra, recibirás un corazón especial... ❤️</p>
+        </div>
+
+        <button class="btn-love" id="magicBtn">DESCUBRIR 🌸</button>
+    </div>
+
+    <div id="garden"></div>
+
+    <script>
+        let clicks = 0;
+        let totalClicksEver = 0;
+        const clicksToFill = 7; // Cuántos clicks para llenar la barra
+
+        const frases = [
+            "Eres mi persona favorita. ❤️",
+            "Me encantas, así de simple. 😊",
+            "Eres pura magia. ✨",
+            "Contigo todo es mejor. 🌷",
+            "Mi lugar favorito eres tú. 📍",
+            "Gracias por existir. 🥰",
+            "Eres calma en mi caos. ❤️",
+            "Te quiero muchísimo. 💖",
+            "Eres mi mejor coincidencia. 🌠",
+            "Sonrío al pensarte. 😊",
+            "Eres el detalle más lindo. 🌸",
+            "Me haces muy feliz. 💓"
+        ];
+
+        const btn = document.getElementById('magicBtn');
+        const text = document.getElementById('mensaje');
+        const countDisplay = document.getElementById('count');
+        const bar = document.getElementById('bar');
+        const heartOverlay = document.getElementById('heart-overlay');
+        const levelName = document.getElementById('level-name');
+
+        btn.addEventListener('click', () => {
+            clicks++;
+            totalClicksEver++;
+            
+            // Actualizar interfaz
+            countDisplay.textContent = totalClicksEver;
+            
+            // Calcular progreso (0 a 100)
+            let progress = (clicks / clicksToFill) * 100;
+            bar.style.width = progress + "%";
+
+            // Efecto Confeti pequeño
+            confetti({
+                particleCount: 30,
+                spread: 50,
+                origin: { y: 0.8 },
+                colors: ['#fb6f92', '#ffffff']
+            });
+
+            // Cambiar mensaje
+            text.style.opacity = 0;
+            setTimeout(() => {
+                text.textContent = frases[Math.floor(Math.random() * frases.length)];
+                text.style.opacity = 1;
+            }, 200);
+
+            // ¿Barra llena?
+            if (clicks >= clicksToFill) {
+                showHeartAnimation();
+            }
+        });
+
+        function showHeartAnimation() {
+            // 1. Mostrar corazón gigante
+            heartOverlay.classList.remove('pop-heart');
+            void heartOverlay.offsetWidth; // Truco para reiniciar animación
+            heartOverlay.classList.add('pop-heart');
+
+            // 2. Confeti grande
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.6 },
+                colors: ['#ff0000', '#fb6f92', '#ffffff']
+            });
+
+            // 3. Reiniciar barra y clicks locales
+            setTimeout(() => {
+                clicks = 0;
+                bar.style.width = "0%";
+                // Cambiar nivel aleatoriamente para que se vea didáctico
+                const niveles = ["Adoración", "Pasión", "Ternura", "Infinito"];
+                levelName.textContent = niveles[Math.floor(Math.random() * niveles.length)];
+            }, 1000);
+        }
+
+        // Sistema de pétalos flotantes
+        function createFlower() {
+            const symbols = ['🌸', '✨', '💖', '🌷'];
+            const f = document.createElement('div');
+            f.className = 'flower';
+            f.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+            f.style.left = Math.random() * 95 + 'vw';
+            f.style.bottom = "-50px";
+            f.style.fontSize = (Math.random() * 15 + 15) + 'px';
+            document.getElementById('garden').appendChild(f);
+            setTimeout(() => f.remove(), 8000);
+        }
+        setInterval(createFlower, 1000);
+    </script>
+</body>
+</html>
